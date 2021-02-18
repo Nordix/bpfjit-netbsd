@@ -51,16 +51,18 @@ else
     echo "git clone git@github.com:NetBSD/src --single-branch netbsd-src"
     git clone git@github.com:NetBSD/src --single-branch netbsd-src \
         || die "Failed to clone git@github.com:NetBSD/src"
+
+    # Make a backup so we don't have to download it again next time.
+    tar -cjf netbsd-src.tar.bz2 netbsd-src/.git \
+        || die "Failed to backup current repo"
 fi
 
-# Make a backup so we don't have to download it again next time.
-tar -cjf netbsd-src.tar.bz2 netbsd-src/.git \
-    || die "Failed to backup current repo"
-
 # Rewrite the history, keeping only the bpfjit files.
+# Forced rewrite needed when using a restored netbsd repo.
 cd netbsd-src
 $gfr --path sys/net/bpf.h --path sys/net/bpfjit.c --path sys/net/bpfjit.h \
      --path-rename sys/net/:src/ \
+     --force \
      || die "Failed to rewrite history using git-filter-repo"
 
 # Prepare to overwrite our own repo.
