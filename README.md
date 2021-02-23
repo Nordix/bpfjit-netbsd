@@ -42,3 +42,53 @@ PREFIX=/tmp/stage make install
 # Build and run test
 PREFIX=/tmp/stage make test
 ```
+
+## Build using CMake
+
+The library can also be built using CMake and the configs provides
+build and install targets. During the build generation step the
+dependency `sljit` with be searched for and needs to be installed
+on the system as a prerequisite.
+
+```
+# Optional:
+# Download, build and install dependency sljit
+sudo make install-sljit
+
+# Build bpjit
+mkdir -p build && cd build
+cmake ..
+make
+
+# Install bpjit
+sudo make install
+
+# Build and run test
+make bpfjit-test
+./bpfjit-test
+```
+
+The library can also be installed to a local directory,
+this avoids the need of `sudo` and both DESTDIR and prefix are
+handled.
+
+```
+# Prepare a local installation
+mkdir /tmp/stage
+
+# Download, build and install dependency sljit
+PREFIX=/tmp/stage make install-sljit
+
+# Build bpjit
+mkdir -p build && cd build
+cmake -DCMAKE_PREFIX_PATH=/tmp/stage ..
+make
+
+# Install bpjit using prefix
+# This avoids usage of paths containing `/usr/local/`
+cmake --install . --prefix /tmp/stage
+
+# Build and run test
+make bpfjit-test
+./bpfjit-test
+```
