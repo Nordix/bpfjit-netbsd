@@ -1,5 +1,12 @@
 #!/bin/sh
 
+# Copyright (c) 2021, Ericsson Software Technology
+#
+# Copying and distribution of this file, with or without modification,
+# are permitted in any medium without royalty provided the copyright
+# notice and this notice are preserved.  This file is offered as-is,
+# without any warranty.
+
 # Updates the repo from NetBSD's mirror on GitHub
 # -----------------------------------------------
 #
@@ -10,6 +17,8 @@
 # downloading the repo each time, the script attempts to backup the repo before
 # destructively rewriting it. The backup file, if not deleted, is automatically
 # used and updated the next time this script is used.
+
+set -e
 
 die() { echo "$*" 1>&2 ; exit 1; }
 
@@ -79,7 +88,7 @@ $gfr --invert-paths \
     || die "Failed to rewrite history using git-filter-repo"
 
 # Merge latest bpfjit files to our own repo.
-git remote remove netbsd
+git remote | grep -q netbsd && git remote remove netbsd
 git remote add netbsd _update/netbsd-src \
     || die "Failed to add 'netbsd-src' remote repo"
 git fetch netbsd --tags \

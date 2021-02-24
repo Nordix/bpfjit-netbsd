@@ -22,7 +22,7 @@ install `sljit` for testing.
 # Download, build and install dependency sljit
 sudo make install-sljit
 
-# Build and install bpjit
+# Build and install bpfjit
 sudo make install
 ```
 
@@ -36,7 +36,7 @@ mkdir /tmp/stage
 # Download, build and install dependency sljit
 PREFIX=/tmp/stage make install-sljit
 
-# Build and install bpjit
+# Build and install bpfjit
 PREFIX=/tmp/stage make install
 
 # Build and run test
@@ -55,12 +55,12 @@ on the system as a prerequisite.
 # Download, build and install dependency sljit
 sudo make install-sljit
 
-# Build bpjit
+# Build bpjfit
 mkdir -p build && cd build
 cmake ..
 make
 
-# Install bpjit
+# Install bpfjit
 sudo make install
 
 # Build and run test
@@ -79,12 +79,12 @@ mkdir /tmp/stage
 # Download, build and install dependency sljit
 PREFIX=/tmp/stage make install-sljit
 
-# Build bpjit
+# Build bpfjit
 mkdir -p build && cd build
 cmake -DCMAKE_PREFIX_PATH=/tmp/stage ..
 make
 
-# Install bpjit using prefix
+# Install bpfjit using prefix
 # This avoids usage of paths containing `/usr/local/`
 cmake --install . --prefix /tmp/stage
 
