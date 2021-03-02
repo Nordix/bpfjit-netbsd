@@ -7,7 +7,7 @@
 
 PREFIX?=/usr/local
 CPPFLAGS += -Isrc/ -I$(DESTDIR)$(PREFIX)/include/
-CFLAGS += -O2 -Wall
+CFLAGS += -O2 -Wall -Werror
 
 lib=libbpfjit.a
 src=src/net/bpfjit.c
@@ -48,13 +48,21 @@ install-sljit: $(sljit)
 
 # Test of library
 
-bpfjit-test: test/main.o
+bpfjit-test: test/test.o
 	$(CC) $< -o $@ -L$(DESTDIR)$(PREFIX)/lib -lbpfjit -lsljit
+
+bpfjit-test-with-pcap: test/test-with-pcap.o test/pcap-helpers.o
+	$(CC) $^ -o $@ -L$(DESTDIR)$(PREFIX)/lib -Wl,-rpath=$(DESTDIR)$(PREFIX)/lib -lbpfjit -lsljit -lpcap
 
 .PHONY: test
 test: bpfjit-test
 	./bpfjit-test
 
+.PHONY: test-with-pcap
+test-with-pcap: bpfjit-test-with-pcap
+	./bpfjit-test-with-pcap
+
 .PHONY: clean
 clean:
-	rm -rf $(obj) $(lib) bpfjit-test sljit $(sljit) test/main.o
+	rm -rf $(obj) $(lib) bpfjit-test bpfjit-test-with-pcap sljit $(sljit) \
+		test/test.o test/test-with-pcap.o test/pcap-helpers.o

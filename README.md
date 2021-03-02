@@ -9,7 +9,7 @@ bpfjit depends on sljit: https://github.com/zherczeg/sljit/
 This repo contains the bpfjit files and their history extracted from the NetBSD
 repo at https://github.com/NetBSD/src. The files are patched to be able
 to build using the latest sljit. See the script `update.sh` for details
-about code changes and how the file history is extracted.
+about how the file history is extracted.
 
 ## Build using Make
 
@@ -39,8 +39,11 @@ PREFIX=/tmp/stage make install-sljit
 # Build and install bpfjit
 PREFIX=/tmp/stage make install
 
-# Build and run test
+# Optional: Build and run tests
 PREFIX=/tmp/stage make test
+
+# Optional: Build and run tests that requires package `libpcap-dev`
+PREFIX=/tmp/stage make test-with-pcap
 ```
 
 ## Build using CMake
@@ -62,10 +65,6 @@ make
 
 # Install bpfjit
 sudo make install
-
-# Build and run test
-make bpfjit-test
-./bpfjit-test
 ```
 
 The library can also be installed to a local directory,
@@ -88,7 +87,11 @@ make
 # This avoids usage of paths containing `/usr/local/`
 cmake --install . --prefix /tmp/stage
 
-# Build and run test
+# Optional: Build and run tests
 make bpfjit-test
 ./bpfjit-test
+
+# Optional: Build and run tests that requires package `libpcap-dev`
+make bpfjit-test-with-pcap
+./bpfjit-test-with-pcap
 ```

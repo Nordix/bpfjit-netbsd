@@ -69,12 +69,21 @@ export(EXPORT bpfjit-targets
     NAMESPACE bpfjit::)
 
 # ----------------------------
-# Test suite
+# Test suites
 
 add_executable(bpfjit-test EXCLUDE_FROM_ALL
-  test/main.c
+  test/test.c
 )
 
 target_link_libraries(bpfjit-test
   bpfjit
+)
+
+add_executable(bpfjit-test-with-pcap EXCLUDE_FROM_ALL
+  test/test-with-pcap.c
+  test/pcap-helpers.c
+)
+
+target_link_libraries(bpfjit-test-with-pcap
+  bpfjit -lpcap
 )

@@ -134,4 +134,6 @@ int main(int argc, char *argv[]) {
     tc_bpfjit_ret_k();
     tc_bpfjit_alu_add_k();
     tc_bpfjit_jmp_jgt_k();
+
+    return 0;
 }

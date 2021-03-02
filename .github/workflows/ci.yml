@@ -49,7 +49,7 @@ jobs:
 
     steps:
     - name: Prepare
-      run: sudo apt install ${{ matrix.compiler }}
+      run: sudo apt install ${{ matrix.compiler }} libpcap-dev
 
     - name: Setup CMake
       run: |
@@ -89,10 +89,14 @@ jobs:
     - name: Build and run tests via CMake
       shell: bash
       working-directory: build
-      run: make bpfjit-test && ./bpfjit-test
+      run: |
+        make bpfjit-test && ./bpfjit-test
+        make bpfjit-test-with-pcap && ./bpfjit-test-with-pcap
 
     - name: Build and run tests via Makefile
       shell: bash
       env:
         CC: ${{ matrix.compiler }}
-      run: PREFIX=$RUNNER_TEMP/install/usr/local make test
+      run: |
+        PREFIX=$RUNNER_TEMP/install/usr/local make test
+        PREFIX=$RUNNER_TEMP/install/usr/local make test-with-pcap
