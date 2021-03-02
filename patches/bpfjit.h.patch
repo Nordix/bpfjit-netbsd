@@ -1,0 +1,14 @@
+diff --git a/src/net/bpfjit.h b/src/net/bpfjit.h
+index 9dc132f..66d1678 100644
+--- a/src/net/bpfjit.h
++++ b/src/net/bpfjit.h
+@@ -40,7 +40,8 @@
+ #include <sys/types.h>
+ 
+ #ifdef __linux
+-#include <pcap-bpf.h>
++/* Unused include removed */
++/* #include <pcap-bpf.h> */
+ #else
+ #include <net/bpf.h>
+ #endif

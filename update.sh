@@ -31,8 +31,8 @@ mkdir -p _update
 cd _update || die "Can't cd to _update directory"
 
 # Look for git-filter-repo in path or clone it.
-gfr=$(which git-filter-repo)
-if [ $? -ne 0 ]
+gfr=$(which git-filter-repo || true)
+if [ -z "$gfr" ]
 then
     echo "Cloning git@github.com:newren/git-filter-repo."
     git clone git@github.com:newren/git-filter-repo \
@@ -100,24 +100,10 @@ git remote remove netbsd \
     || die "Failed to remove 'netbsd-src' remote repo"
 
 # Patch bpfjit files to compile.
-# Remove unused includes
-sed -i 's|\(#include <net/dlt.h>\)|/* \1 */|g' src/net/bpf.h
-sed -i 's|\(#include <sys/ioccom.h>\)|/* \1 */|g' src/net/bpf.h
-sed -i 's|\(#include <pcap-bpf.h>\)|/* \1 */|g' src/net/bpfjit.h
-# Remove assert using unknown macro
-sed -i 's|\(__CTASSERT.*\)$|/* \1 */|g' src/net/bpf.h
-# Ignore unknown macro __RCSID
-sed -i 's|^__RCSID|#define __RCSID(s)\n__RCSID|g' src/net/bpfjit.c
-# Updates needed for latest version of sljit
-sed -i 's/sljit_emit_ijump/sljit_emit_icall/g' src/net/bpfjit.c
-sed -i 's/SLJIT_CALL2,/SLJIT_CALL, SLJIT_ARG1(SW) | SLJIT_ARG2(SW),/g' src/net/bpfjit.c
-sed -i 's/SLJIT_CALL3,/SLJIT_CALL, SLJIT_ARG1(SW) | SLJIT_ARG2(SW) | SLJIT_ARG3(SW),/g' src/net/bpfjit.c
-sed -i 's/sljit_create_compiler(NULL)/sljit_create_compiler(NULL, NULL)/g' src/net/bpfjit.c
-sed -i 's/sljit_emit_enter(compiler, 0, 2,/sljit_emit_enter(compiler, 0, SLJIT_ARG1(SW) | SLJIT_ARG2(SW),/g' src/net/bpfjit.c
-sed -i 's/sljit_free_code((void \*)code)/sljit_free_code((void *)code, NULL)/g' src/net/bpfjit.c
+git apply patches/bpf.h.patch patches/bpfjit.c.patch patches/bpfjit.h.patch
 
 # Commit patched files.
-git add src/net/bpf.h src/net/bpfjit.h src/net/bpfjit.c \
+git add src/net/bpf.h src/net/bpfjit.c src/net/bpfjit.h \
     && git commit -m "Patch bpfjit to build with latest sljit" \
         || die "Failed to commit patch"
 

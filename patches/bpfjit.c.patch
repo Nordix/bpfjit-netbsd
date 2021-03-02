@@ -1,0 +1,79 @@
+diff --git a/src/net/bpfjit.c b/src/net/bpfjit.c
+index a0c9820..3a80a6a 100644
+--- a/src/net/bpfjit.c
++++ b/src/net/bpfjit.c
+@@ -33,7 +33,8 @@
+ #ifdef _KERNEL
+ __KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.48 2020/02/01 02:54:02 riastradh Exp $");
+ #else
+-__RCSID("$NetBSD: bpfjit.c,v 1.48 2020/02/01 02:54:02 riastradh Exp $");
++/* Remove use of undefined macro */
++/*__RCSID("$NetBSD: bpfjit.c,v 1.48 2020/02/01 02:54:02 riastradh Exp $");*/
+ #endif
+ 
+ #include <sys/types.h>
+@@ -603,8 +604,9 @@ emit_xcall(struct sljit_compiler *compiler, bpfjit_hint_t hints,
+ 		return status;
+ 
+ 	/* fn(buf, k, &err); */
+-	status = sljit_emit_ijump(compiler,
+-	    SLJIT_CALL3,
++	/* Updated for latest version of sljit */
++	status = sljit_emit_icall(compiler,
++	    SLJIT_CALL, SLJIT_ARG1(SW) | SLJIT_ARG2(SW) | SLJIT_ARG3(SW),
+ 	    SLJIT_IMM, SLJIT_FUNC_OFFSET(fn));
+ 	if (status != SLJIT_SUCCESS)
+ 		return status;
+@@ -761,8 +763,9 @@ emit_cop(struct sljit_compiler *compiler, bpfjit_hint_t hints,
+ 	if (status != SLJIT_SUCCESS)
+ 		return status;
+ 
+-	status = sljit_emit_ijump(compiler,
+-	    SLJIT_CALL3, call_reg, call_off);
++	/* Updated for latest version of sljit */
++	status = sljit_emit_icall(compiler,
++	    SLJIT_CALL, SLJIT_ARG1(SW) | SLJIT_ARG2(SW) | SLJIT_ARG3(SW), call_reg, call_off);
+ 	if (status != SLJIT_SUCCESS)
+ 		return status;
+ 
+@@ -1195,8 +1198,9 @@ emit_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
+ 	if (status != SLJIT_SUCCESS)
+ 		return status;
+ #else
+-	status = sljit_emit_ijump(compiler,
+-	    SLJIT_CALL2,
++	/* Updated for latest version of sljit */
++	status = sljit_emit_icall(compiler,
++	    SLJIT_CALL, SLJIT_ARG1(SW) | SLJIT_ARG2(SW),
+ 	    SLJIT_IMM, xdiv ? SLJIT_FUNC_OFFSET(divide) :
+ 		SLJIT_FUNC_OFFSET(modulus));
+ 
+@@ -2190,7 +2194,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
+ 	if (!optimize(bc, insns, insn_dat, insn_count, &initmask, &hints))
+ 		goto fail;
+ 
+-	compiler = sljit_create_compiler(NULL);
++	/* Updated for latest version of sljit */
++	compiler = sljit_create_compiler(NULL, NULL);
+ 	if (compiler == NULL)
+ 		goto fail;
+ 
+@@ -2198,7 +2203,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
+ 	sljit_compiler_verbose(compiler, stderr);
+ #endif
+ 
+-	status = sljit_emit_enter(compiler, 0, 2, nscratches(hints),
++	/* Updated for latest version of sljit */
++	status = sljit_emit_enter(compiler, 0, SLJIT_ARG1(SW) | SLJIT_ARG2(SW), nscratches(hints),
+ 	    NSAVEDS, 0, 0, sizeof(struct bpfjit_stack));
+ 	if (status != SLJIT_SUCCESS)
+ 		goto fail;
+@@ -2305,6 +2311,6 @@ fail:
+ void
+ bpfjit_free_code(bpfjit_func_t code)
+ {
+-
+-	sljit_free_code((void *)code);
++	/* Updated for latest version of sljit */
++	sljit_free_code((void *)code, NULL);
+ }
