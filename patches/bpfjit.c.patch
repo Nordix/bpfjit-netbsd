@@ -1,5 +1,5 @@
 diff --git a/src/net/bpfjit.c b/src/net/bpfjit.c
-index a0c9820..3a80a6a 100644
+index a0c9820..31d10e2 100644
 --- a/src/net/bpfjit.c
 +++ b/src/net/bpfjit.c
 @@ -33,7 +33,8 @@
@@ -20,7 +20,7 @@ index a0c9820..3a80a6a 100644
 -	    SLJIT_CALL3,
 +	/* Updated for latest version of sljit */
 +	status = sljit_emit_icall(compiler,
-+	    SLJIT_CALL, SLJIT_ARG1(SW) | SLJIT_ARG2(SW) | SLJIT_ARG3(SW),
++	    SLJIT_CALL, SLJIT_RET(SW) | SLJIT_ARG1(SW) | SLJIT_ARG2(SW) | SLJIT_ARG3(SW),
  	    SLJIT_IMM, SLJIT_FUNC_OFFSET(fn));
  	if (status != SLJIT_SUCCESS)
  		return status;
@@ -32,7 +32,7 @@ index a0c9820..3a80a6a 100644
 -	    SLJIT_CALL3, call_reg, call_off);
 +	/* Updated for latest version of sljit */
 +	status = sljit_emit_icall(compiler,
-+	    SLJIT_CALL, SLJIT_ARG1(SW) | SLJIT_ARG2(SW) | SLJIT_ARG3(SW), call_reg, call_off);
++	    SLJIT_CALL, SLJIT_RET(SW) | SLJIT_ARG1(SW) | SLJIT_ARG2(SW) | SLJIT_ARG3(SW), call_reg, call_off);
  	if (status != SLJIT_SUCCESS)
  		return status;
  
@@ -44,7 +44,7 @@ index a0c9820..3a80a6a 100644
 -	    SLJIT_CALL2,
 +	/* Updated for latest version of sljit */
 +	status = sljit_emit_icall(compiler,
-+	    SLJIT_CALL, SLJIT_ARG1(SW) | SLJIT_ARG2(SW),
++	    SLJIT_CALL, SLJIT_RET(SW) | SLJIT_ARG1(SW) | SLJIT_ARG2(SW),
  	    SLJIT_IMM, xdiv ? SLJIT_FUNC_OFFSET(divide) :
  		SLJIT_FUNC_OFFSET(modulus));
  
