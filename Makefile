@@ -9,6 +9,10 @@ PREFIX?=/usr/local
 CPPFLAGS += -Isrc/ -I$(DESTDIR)$(PREFIX)/include/
 CFLAGS += -O2 -Wall -Werror
 
+# The sljit commit (hashtag or branch) that is downloaded and installed
+# by the make target: install-sljit
+USE_SLJIT_COMMIT?=master
+
 lib=libbpfjit.a
 src=src/net/bpfjit.c
 headers=src/net/bpf.h src/net/bpfjit.h
@@ -31,7 +35,7 @@ install: $(lib)
 sljit = libsljit.a
 
 $(sljit):
-	curl -L https://github.com/zherczeg/sljit/archive/master.tar.gz | \
+	curl -L https://github.com/zherczeg/sljit/archive/$(USE_SLJIT_COMMIT).tar.gz | \
 		tar xz --one-top-level=sljit --strip=1
 	$(MAKE) -C sljit
 	$(AR) rvs $@ sljit/bin/sljitLir.o

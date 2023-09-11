@@ -10,6 +10,8 @@ on:
       # forked PRs, once for the push and then once for opening the PR.
       - '**:**'
       - master
+env:
+  USE_SLJIT_COMMIT: 19309dc09600fa422c16c5453adc721f6a6e9c81
 
 jobs:
   build:
@@ -64,7 +66,10 @@ jobs:
       run: cmake -E make_directory $RUNNER_TEMP/install
 
     - name: Download, build and install dependency sljit
-      run: DESTDIR=$RUNNER_TEMP/install make install-sljit
+      run: |
+        DESTDIR=$RUNNER_TEMP/install \
+        USE_SLJIT_COMMIT=${{ env.USE_SLJIT_COMMIT }} \
+        make install-sljit
 
     - name: Create build folder
       run: cmake -E make_directory build
