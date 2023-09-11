@@ -52,7 +52,7 @@ unsigned int jitcall(bpfjit_func_t fn, const uint8_t *pkt, unsigned int wirelen,
 
 /* Test that JIT compilation of an empty bpf program fails */
 void tc_bpfjit_empty() {
-    struct bpf_insn dummy;
+    struct bpf_insn dummy = {};
     bpfjit_func_t code;
 
     code = bpfjit_generate_code(NULL, &dummy, 0);
