@@ -9,7 +9,7 @@ PREFIX?=/usr/local
 CPPFLAGS += -Isrc/ -I$(DESTDIR)$(PREFIX)/include/
 CFLAGS += -O2 -Wall -Werror
 
-# The sljit commit (hashtag or branch) that is downloaded and installed
+# The sljit commit (hash, branch or tag) that is downloaded and installed
 # by the make target: install-sljit
 USE_SLJIT_COMMIT?=master
 
