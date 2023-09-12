@@ -1,50 +1,34 @@
 name: CI
 
-on:
-  push:
-  pull_request:
-    branches:
-      # Branches from forks have the form 'user:branch-name' so we only run
-      # this job on pull_request events for branches that look like fork
-      # branches. Without this we would end up running this job twice for non
-      # forked PRs, once for the push and then once for opening the PR.
-      - '**:**'
-      - master
+on: [push, pull_request]
+
+env:
+  # Use a sljit version that is known to compile with bpjit-netbsd.
+  # This commit is from: Sun Feb 28 18:47:02 2021 +0100
+  USE_SLJIT_COMMIT: 19309dc09600fa422c16c5453adc721f6a6e9c81
 
 jobs:
   build:
     name: ${{ matrix.cmake-build-type }}-build [${{ matrix.compiler }}, cmake-${{ matrix.cmake-version }}]
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc-9, clang-10]
-        cmake-version: [3.19]
+        compiler: [gcc-12, clang-14]
+        cmake-version: ['3.27']
         cmake-build-type: [Release, RelWithDebInfo]
         include:
-          - compiler: gcc-4.8
-            cmake-version: 3.12
+          - compiler: gcc-9
+            cmake-version: '3.12'
             cmake-build-type: Release
-          - compiler: gcc-5
-            cmake-version: 3.13
+          - compiler: gcc-11
+            cmake-version: '3.18'
             cmake-build-type: Release
-          - compiler: gcc-6
-            cmake-version: 3.14
+          - compiler: clang-12
+            cmake-version: '3.15'
             cmake-build-type: Release
-          - compiler: gcc-7
-            cmake-version: 3.15
-            cmake-build-type: Release
-          - compiler: gcc-8
-            cmake-version: 3.16
-            cmake-build-type: Release
-          - compiler: clang-3.9
-            cmake-version: 3.17
-            cmake-build-type: Release
-          - compiler: clang-7
-            cmake-version: 3.18
-            cmake-build-type: Release
-          - compiler: clang-9
-            cmake-version: 3.19
+          - compiler: clang-13
+            cmake-version: '3.20'
             cmake-build-type: Release
 
     steps:
@@ -52,19 +36,20 @@ jobs:
       run: sudo apt install ${{ matrix.compiler }} libpcap-dev
 
     - name: Setup CMake
-      run: |
-        wget https://cmake.org/files/v${{ matrix.cmake-version }}/cmake-${{ matrix.cmake-version }}.0-Linux-x86_64.sh -O /tmp/cmake.sh
-        sudo sh /tmp/cmake.sh --prefix=/usr/local/ --exclude-subdir
-        # Make sure we use correct version
-        cmake --version | grep -c ${{ matrix.cmake-version }}.0
+      uses: jwlawson/actions-setup-cmake@v1
+      with:
+        cmake-version: ${{ matrix.cmake-version }}
 
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Create install folder
       run: cmake -E make_directory $RUNNER_TEMP/install
 
     - name: Download, build and install dependency sljit
-      run: DESTDIR=$RUNNER_TEMP/install make install-sljit
+      run: |
+        DESTDIR=$RUNNER_TEMP/install \
+        USE_SLJIT_COMMIT=${{ env.USE_SLJIT_COMMIT }} \
+        make install-sljit
 
     - name: Create build folder
       run: cmake -E make_directory build
