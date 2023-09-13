@@ -604,9 +604,8 @@ emit_xcall(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 		return status;
 
 	/* fn(buf, k, &err); */
-	/* Updated for latest version of sljit */
-	status = sljit_emit_icall(compiler,
-	    SLJIT_CALL, SLJIT_RET(SW) | SLJIT_ARG1(SW) | SLJIT_ARG2(SW) | SLJIT_ARG3(SW),
+	status = sljit_emit_ijump(compiler,
+	    SLJIT_CALL3,
 	    SLJIT_IMM, SLJIT_FUNC_OFFSET(fn));
 	if (status != SLJIT_SUCCESS)
 		return status;
@@ -686,7 +685,8 @@ emit_cop(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 
 	if (BPF_MISCOP(pc->code) == BPF_COP) {
 		call_reg = SLJIT_IMM;
-		call_off = SLJIT_FUNC_OFFSET(bc->copfuncs[pc->k]);
+		/* Updated for latest version of sljit */
+		call_off = SLJIT_FUNC_ADDR(bc->copfuncs[pc->k]);
 	} else {
 		/* if (X >= bc->nfuncs) return 0; */
 		jump = sljit_emit_cmp(compiler,
@@ -765,7 +765,7 @@ emit_cop(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 
 	/* Updated for latest version of sljit */
 	status = sljit_emit_icall(compiler,
-	    SLJIT_CALL, SLJIT_RET(SW) | SLJIT_ARG1(SW) | SLJIT_ARG2(SW) | SLJIT_ARG3(SW), call_reg, call_off);
+	    SLJIT_CALL, SLJIT_ARGS3(W, W, W, W), call_reg, call_off);
 	if (status != SLJIT_SUCCESS)
 		return status;
 
@@ -1113,8 +1113,9 @@ emit_pow2_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
 		}
 
 		if (shift != 0) {
+			/* Updated for latest version of sljit */
 			status = sljit_emit_op2(compiler,
-			    SLJIT_LSHR|SLJIT_I32_OP,
+			    SLJIT_LSHR|SLJIT_32,
 			    BJ_AREG, 0,
 			    BJ_AREG, 0,
 			    SLJIT_IMM, shift);
@@ -1176,7 +1177,8 @@ emit_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
 		return status;
 
 #if defined(BPFJIT_USE_UDIV)
-	status = sljit_emit_op0(compiler, SLJIT_UDIV|SLJIT_I32_OP);
+	/* Updated for latest version of sljit */
+	status = sljit_emit_op0(compiler, SLJIT_UDIV|SLJIT_32);
 
 	if (BPF_OP(pc->code) == BPF_DIV) {
 #if BJ_AREG != SLJIT_R0
@@ -1200,9 +1202,9 @@ emit_moddiv(struct sljit_compiler *compiler, const struct bpf_insn *pc)
 #else
 	/* Updated for latest version of sljit */
 	status = sljit_emit_icall(compiler,
-	    SLJIT_CALL, SLJIT_RET(SW) | SLJIT_ARG1(SW) | SLJIT_ARG2(SW),
-	    SLJIT_IMM, xdiv ? SLJIT_FUNC_OFFSET(divide) :
-		SLJIT_FUNC_OFFSET(modulus));
+	    SLJIT_CALL, SLJIT_ARGS2(W, W, W),
+	    SLJIT_IMM, xdiv ? SLJIT_FUNC_ADDR(divide) :
+		SLJIT_FUNC_ADDR(modulus));
 
 #if BJ_AREG != SLJIT_RETURN_REG
 	status = sljit_emit_op1(compiler,
@@ -1605,7 +1607,7 @@ alu_to_op(const struct bpf_insn *pc, int *res)
 
 	/*
 	 * Note: all supported 64bit arches have 32bit multiply
-	 * instruction so SLJIT_I32_OP doesn't have any overhead.
+	 * instruction so SLJIT_32 doesn't have any overhead.
 	 */
 	switch (BPF_OP(pc->code)) {
 	case BPF_ADD:
@@ -1615,7 +1617,8 @@ alu_to_op(const struct bpf_insn *pc, int *res)
 		*res = SLJIT_SUB;
 		return true;
 	case BPF_MUL:
-		*res = SLJIT_MUL|SLJIT_I32_OP;
+		/* Updated for latest version of sljit */
+		*res = SLJIT_MUL|SLJIT_32;
 		return true;
 	case BPF_OR:
 		*res = SLJIT_OR;
@@ -1630,7 +1633,8 @@ alu_to_op(const struct bpf_insn *pc, int *res)
 		*res = SLJIT_SHL;
 		return k < 32;
 	case BPF_RSH:
-		*res = SLJIT_LSHR|SLJIT_I32_OP;
+		/* Updated for latest version of sljit */
+		*res = SLJIT_LSHR|SLJIT_32;
 		return k < 32;
 	default:
 		return false;
@@ -1646,9 +1650,10 @@ jmp_to_cond(const struct bpf_insn *pc, bool negate, int *res)
 
 	/*
 	 * Note: all supported 64bit arches have 32bit comparison
-	 * instructions so SLJIT_I32_OP doesn't have any overhead.
+	 * instructions so SLJIT_32 doesn't have any overhead.
 	 */
-	*res = SLJIT_I32_OP;
+	/* Updated for latest version of sljit */
+	*res = SLJIT_32;
 
 	switch (BPF_OP(pc->code)) {
 	case BPF_JGT:
@@ -1941,9 +1946,11 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 
 		case BPF_ALU:
 			if (pc->code == (BPF_ALU|BPF_NEG)) {
-				status = sljit_emit_op1(compiler,
-				    SLJIT_NEG,
+				/* Updated for latest version of sljit */
+				status = sljit_emit_op2(compiler,
+				    SLJIT_SUB,
 				    BJ_AREG, 0,
+				    SLJIT_IMM, 0,
 				    BJ_AREG, 0);
 				if (status != SLJIT_SUCCESS)
 					goto fail;
@@ -1973,8 +1980,9 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 
 			/* division by zero? */
 			if (src == BPF_X) {
+				/* Updated for latest version of sljit */
 				jump = sljit_emit_cmp(compiler,
-				    SLJIT_EQUAL|SLJIT_I32_OP,
+				    SLJIT_EQUAL|SLJIT_32,
 				    BJ_XREG, 0,
 				    SLJIT_IMM, 0);
 				if (jump == NULL)
@@ -2204,7 +2212,7 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 #endif
 
 	/* Updated for latest version of sljit */
-	status = sljit_emit_enter(compiler, 0, SLJIT_ARG1(SW) | SLJIT_ARG2(SW), nscratches(hints),
+	status = sljit_emit_enter(compiler, 0, SLJIT_ARGS2(W, W, W), nscratches(hints),
 	    NSAVEDS, 0, 0, sizeof(struct bpfjit_stack));
 	if (status != SLJIT_SUCCESS)
 		goto fail;
