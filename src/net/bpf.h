@@ -40,7 +40,11 @@
 #ifndef _NET_BPF_H_
 #define _NET_BPF_H_
 
-#include <sys/ioccom.h>
+/* Avoid redefines when using libpcap */
+#ifndef lib_pcap_bpf_h
+
+/* Unused include removed */
+/* #include <sys/ioccom.h> */
 #include <sys/time.h>
 
 /* BSD style release date */
@@ -219,7 +223,8 @@ struct bpf_hdr32 {
 #endif
 
 /* Pull in data-link level type codes. */
-#include <net/dlt.h>
+/* Unused include removed */
+/* #include <net/dlt.h> */
 
 /*
  * The instruction encodings.
@@ -359,6 +364,8 @@ struct bpf_aux_data {
  */
 #define	BPF_MEMWORDS		16
 
+#endif /* !lib_pcap_bpf_h */
+
 /*
  * bpf_memword_init_t: bits indicate which words in the external memory
  * store will be initialised by the caller before BPF program execution.
@@ -367,7 +374,8 @@ typedef uint32_t bpf_memword_init_t;
 #define	BPF_MEMWORD_INIT(k)	(UINT32_C(1) << (k))
 
 /* Note: two most significant bits are reserved by bpfjit. */
-__CTASSERT(BPF_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY);
+/* Usage of undefined assert macro removed */
+/* __CTASSERT(BPF_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY); */
 
 #ifdef _KERNEL
 /*
@@ -375,8 +383,9 @@ __CTASSERT(BPF_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY);
  */
 #define	BPF_MAX_MEMWORDS	30
 
-__CTASSERT(BPF_MAX_MEMWORDS >= BPF_MEMWORDS);
-__CTASSERT(BPF_MAX_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY);
+/* Usage of undefined assert macro removed */
+/* __CTASSERT(BPF_MAX_MEMWORDS >= BPF_MEMWORDS); */
+/* __CTASSERT(BPF_MAX_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY); */
 #endif
 
 /*
@@ -596,10 +605,11 @@ void	bpf_jit_freecode(bpfjit_func_t);
 
 #endif
 
-int	bpf_validate(const struct bpf_insn *, int);
-u_int	bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int);
+/* Unused function specifications removed (libpcap compatibility) */
+/* int	bpf_validate(const struct bpf_insn *, int); */
+/* u_int	bpf_filter(const struct bpf_insn *, const u_char *, u_int, u_int); */
 
-u_int	bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u_int, const struct bpf_aux_data *);
+/* u_int	bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u_int, const struct bpf_aux_data *); */
 
 /*
  * events to be tracked by bpf_register_track_event callbacks

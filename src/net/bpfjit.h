@@ -40,7 +40,8 @@
 #include <sys/types.h>
 
 #ifdef __linux
-#include <pcap-bpf.h>
+/* Unused include removed */
+/* #include <pcap-bpf.h> */
 #else
 #include <net/bpf.h>
 #endif
