@@ -48,6 +48,7 @@ install-sljit: $(sljit)
 	install -m 644 sljit/sljit_src/sljitLir.h \
                        sljit/sljit_src/sljitConfig.h \
                        sljit/sljit_src/sljitConfigInternal.h \
+                       sljit/sljit_src/sljitConfigCPU.h \
                        $(DESTDIR)$(PREFIX)/include
 
 # Test of library

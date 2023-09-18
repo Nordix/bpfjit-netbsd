@@ -1,5 +1,5 @@
 diff --git a/src/net/bpf.h b/src/net/bpf.h
-index 71efd9a..59fdf0e 100644
+index bc9d3dd..1f0c174 100644
 --- a/src/net/bpf.h
 +++ b/src/net/bpf.h
 @@ -40,7 +40,11 @@
@@ -15,7 +15,7 @@ index 71efd9a..59fdf0e 100644
  #include <sys/time.h>
  
  /* BSD style release date */
-@@ -216,7 +220,8 @@ struct bpf_hdr32 {
+@@ -219,7 +223,8 @@ struct bpf_hdr32 {
  #endif
  
  /* Pull in data-link level type codes. */
@@ -25,7 +25,7 @@ index 71efd9a..59fdf0e 100644
  
  /*
   * The instruction encodings.
-@@ -356,6 +361,8 @@ struct bpf_aux_data {
+@@ -359,6 +364,8 @@ struct bpf_aux_data {
   */
  #define	BPF_MEMWORDS		16
  
@@ -34,7 +34,7 @@ index 71efd9a..59fdf0e 100644
  /*
   * bpf_memword_init_t: bits indicate which words in the external memory
   * store will be initialised by the caller before BPF program execution.
-@@ -364,7 +371,8 @@ typedef uint32_t bpf_memword_init_t;
+@@ -367,7 +374,8 @@ typedef uint32_t bpf_memword_init_t;
  #define	BPF_MEMWORD_INIT(k)	(UINT32_C(1) << (k))
  
  /* Note: two most significant bits are reserved by bpfjit. */
@@ -44,7 +44,7 @@ index 71efd9a..59fdf0e 100644
  
  #ifdef _KERNEL
  /*
-@@ -372,8 +380,9 @@ __CTASSERT(BPF_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY);
+@@ -375,8 +383,9 @@ __CTASSERT(BPF_MEMWORDS + 2 <= sizeof(bpf_memword_init_t) * NBBY);
   */
  #define	BPF_MAX_MEMWORDS	30
  
@@ -56,7 +56,7 @@ index 71efd9a..59fdf0e 100644
  #endif
  
  /*
-@@ -555,10 +564,11 @@ void	bpf_jit_freecode(bpfjit_func_t);
+@@ -596,10 +605,11 @@ void	bpf_jit_freecode(bpfjit_func_t);
  
  #endif
  
@@ -69,5 +69,5 @@ index 71efd9a..59fdf0e 100644
 -u_int	bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u_int, const struct bpf_aux_data *);
 +/* u_int	bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u_int, const struct bpf_aux_data *); */
  
- 
- __END_DECLS
+ /*
+  * events to be tracked by bpf_register_track_event callbacks

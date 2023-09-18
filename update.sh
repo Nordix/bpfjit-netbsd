@@ -30,14 +30,16 @@ reporoot=$(pwd)
 mkdir -p _update
 cd _update || die "Can't cd to _update directory"
 
-# Look for git-filter-repo in path or clone it.
+# Look for git-filter-repo in path or clone it when needed.
 gfr=$(which git-filter-repo || true)
 if [ -z "$gfr" ]
 then
-    echo "Cloning git@github.com:newren/git-filter-repo."
-    git clone git@github.com:newren/git-filter-repo \
-        || die "Can't clone git-filter-repo"
     gfr=$(pwd)/git-filter-repo/git-filter-repo
+    if [ ! -e $gfr ] ; then
+        echo "Cloning git@github.com:newren/git-filter-repo."
+        git clone git@github.com:newren/git-filter-repo \
+            || die "Can't clone git-filter-repo"
+    fi
 fi
 
 # Clone NetBSD. Update using git pull if clone already exists.
@@ -80,10 +82,11 @@ cd $reporoot
 # Make a backup of our ".git"
 tar -cjf "_update/gitbackup$(date +%Y-%m-%d).tar.bz2" .git
 
-# Remove current bpfjit files from our own repo.
+# Remove current bpfjit files from our own repo in current branch.
 # TODO: Remove --force flag, but this requires a fresh clone
 $gfr --invert-paths \
      --path src/net/bpf.h --path src/net/bpfjit.c --path src/net/bpfjit.h \
+     --refs $(git rev-parse --abbrev-ref HEAD) \
      --force \
     || die "Failed to rewrite history using git-filter-repo"
 
@@ -100,7 +103,21 @@ git remote remove netbsd \
     || die "Failed to remove 'netbsd-src' remote repo"
 
 # Patch bpfjit files to compile.
-git apply patches/bpf.h.patch patches/bpfjit.c.patch patches/bpfjit.h.patch
+git apply --reject \
+    patches/bpf.h.patch \
+    patches/bpfjit.c.patch \
+    patches/bpfjit.h.patch \
+    || die "
+Failed to apply a patch. Correct the patch using following steps:
+1. Apply the *.reject file manually.
+2. Update the failing patch file, for example:
+   git diff src/net/bpf.h > patches/bpf.h.patch
+3. Commit the updated patch file.
+4. Remove the modified netbsd clone.
+   rm -rf _update/netbsd-src
+5. Rerun, but with updated patch files.
+   ./update.sh
+"
 
 # Commit patched files.
 git add src/net/bpf.h src/net/bpfjit.c src/net/bpfjit.h \

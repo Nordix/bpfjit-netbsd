@@ -14,6 +14,19 @@ this library together with libpcap.
 See the script `update.sh` for details about how the file history is extracted,
 and the patch files in `patches/` for reason of each change.
 
+## Build configurations
+
+Bpfjit can be configured at build time using following defines:
+
+* `SLJIT_VERBOSE` - Enabled by default in sljit
+
+  Unless disabled bpfjit will print generated machine code to stderr.
+  Recommended to be disabled in production and requires disabling in **both** bpfjit and sljit.
+
+* `BPFJIT_USE_UDIV` - Disabled by default in bpfjit
+
+  Generate *udiv* instructions instead of function calls for divide or modulus handling.
+
 ## Build using Make
 
 Building bpfjit requires a static library `sljit` and its header files to be
@@ -23,10 +36,10 @@ install `sljit` for testing.
 ```
 # Optional:
 # Download, build and install dependency sljit
-sudo make install-sljit
+sudo make EXTRA_CPPFLAGS="-DSLJIT_VERBOSE=0" install-sljit
 
 # Build and install bpfjit
-sudo make install
+sudo make CPPFLAGS="-DSLJIT_VERBOSE=0" install
 ```
 
 The libraries can also be built and installed to a local directory,
@@ -59,11 +72,11 @@ on the system as a prerequisite.
 ```
 # Optional:
 # Download, build and install dependency sljit
-sudo make install-sljit
+sudo make EXTRA_CPPFLAGS="-DSLJIT_VERBOSE=0" install-sljit
 
 # Build bpjfit
 mkdir -p build && cd build
-cmake ..
+cmake -D CMAKE_C_FLAGS="-DSLJIT_VERBOSE=0" ..
 make
 
 # Install bpfjit
