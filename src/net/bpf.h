@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.h,v 1.75 2020/06/11 13:36:20 roy Exp $	*/
+/*	$NetBSD: bpf.h,v 1.82 2023/08/23 13:21:17 rin Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -92,9 +92,9 @@ struct bpf_stat {
 };
 
 /*
- * Struct returned by BIOCGSTATSOLD.
+ * Struct returned by BIOCGSTATS_30.
  */
-struct bpf_stat_old {
+struct bpf_stat30 {
 	u_int bs_recv;		/* number of packets received */
 	u_int bs_drop;		/* number of packets dropped */
 };
@@ -139,7 +139,7 @@ struct bpf_version {
 #define BIOCGORTIMEOUT	 _IOR('B', 110, struct timeval50)
 #endif
 #define BIOCGSTATS	 _IOR('B', 111, struct bpf_stat)
-#define BIOCGSTATSOLD	 _IOR('B', 111, struct bpf_stat_old)
+#define BIOCGSTATS_30	 _IOR('B', 111, struct bpf_stat30)
 #define BIOCIMMEDIATE	 _IOW('B', 112, u_int)
 #define BIOCVERSION	 _IOR('B', 113, struct bpf_version)
 #define BIOCSTCPF	 _IOW('B', 114, struct bpf_program)
@@ -208,7 +208,10 @@ struct bpf_hdr32 {
  * XXX fail-safe: on new machines, we just use the 'safe' sizeof.
  */
 #ifdef _KERNEL
-#if defined(__arm32__) || defined(__i386__) || defined(__m68k__) || \
+#if defined(__mips64)
+#define SIZEOF_BPF_HDR sizeof(struct bpf_hdr)
+#define SIZEOF_BPF_HDR32 18
+#elif defined(__arm32__) || defined(__i386__) || defined(__m68k__) || \
     defined(__mips__) || defined(__ns32k__) || defined(__vax__) || \
     defined(__sh__) || (defined(__sparc__) && !defined(__sparc64__))
 #define SIZEOF_BPF_HDR 18
@@ -459,6 +462,11 @@ struct bpf_ops {
 
 	void (*bpf_mtap_softint_init)(struct ifnet *);
 	void (*bpf_mtap_softint)(struct ifnet *, struct mbuf *);
+
+	int (*bpf_register_track_event)(struct bpf_if **,
+	    void (*)(struct bpf_if *, struct ifnet *, int, int));
+	int (*bpf_deregister_track_event)(struct bpf_if **,
+	    void (*)(struct bpf_if *, struct ifnet *, int, int));
 };
 
 extern struct bpf_ops *bpf_ops;
@@ -478,8 +486,13 @@ bpf_attach2(struct ifnet *_ifp, u_int _dlt, u_int _hdrlen, struct bpf_if **_dp)
 static __inline void
 bpf_mtap(struct ifnet *_ifp, struct mbuf *_m, u_int _direction)
 {
-	if (_ifp->if_bpf)
-		bpf_ops->bpf_mtap(_ifp->if_bpf, _m, _direction);
+	if (_ifp->if_bpf) {
+		if (_ifp->if_bpf_mtap) {
+			_ifp->if_bpf_mtap(_ifp->if_bpf, _m, _direction);
+		} else {
+			bpf_ops->bpf_mtap(_ifp->if_bpf, _m, _direction);
+		}
+	}
 }
 
 static __inline void
@@ -508,6 +521,16 @@ static __inline void
 bpf_change_type(struct ifnet *_ifp, u_int _dlt, u_int _hdrlen)
 {
 	bpf_ops->bpf_change_type(_ifp, _dlt, _hdrlen);
+}
+
+static __inline bool
+bpf_peers_present(struct bpf_if *dp)
+{
+	/*
+	 * Our code makes sure the driver visible pointer is NULL
+	 * whenever there is no listener on this tap.
+	 */
+	return dp != NULL;
 }
 
 static __inline void
@@ -544,6 +567,24 @@ bpf_mtap_softint(struct ifnet *_ifp, struct mbuf *_m)
 		bpf_ops->bpf_mtap_softint(_ifp, _m);
 }
 
+static __inline int
+bpf_register_track_event(struct bpf_if **_dp,
+	    void (*_fun)(struct bpf_if *, struct ifnet *, int, int))
+{
+	if (bpf_ops->bpf_register_track_event == NULL)
+		return ENXIO;
+	return bpf_ops->bpf_register_track_event(_dp, _fun);
+}
+
+static __inline int
+bpf_deregister_track_event(struct bpf_if **_dp,
+	    void (*_fun)(struct bpf_if *, struct ifnet *, int, int))
+{
+	if (bpf_ops->bpf_deregister_track_event == NULL)
+		return ENXIO;
+	return bpf_ops->bpf_deregister_track_event(_dp, _fun);
+}
+
 void	bpf_setops(void);
 
 void	bpf_ops_handover_enter(struct bpf_ops *);
@@ -570,7 +611,20 @@ void	bpf_jit_freecode(bpfjit_func_t);
 
 /* u_int	bpf_filter_with_aux_data(const struct bpf_insn *, const u_char *, u_int, u_int, const struct bpf_aux_data *); */
 
+/*
+ * events to be tracked by bpf_register_track_event callbacks
+ */
+#define	BPF_TRACK_EVENT_ATTACH	1
+#define	BPF_TRACK_EVENT_DETACH	2
+
+void bpf_dump(const struct bpf_program *, int);
+char  *bpf_image(const struct bpf_insn *, int);
 
 __END_DECLS
+
+#if 1  /* XXX: remove me, for the benefit of sanitizers */
+#define BIOCGSTATSOLD BIOCGSTATS_30
+#define bpf_stat_old bpf_stat30
+#endif
 
 #endif /* !_NET_BPF_H_ */
