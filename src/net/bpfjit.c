@@ -2202,8 +2202,7 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 	if (!optimize(bc, insns, insn_dat, insn_count, &initmask, &hints))
 		goto fail;
 
-	/* Updated for latest version of sljit */
-	compiler = sljit_create_compiler(NULL, NULL);
+	compiler = sljit_create_compiler(NULL);
 	if (compiler == NULL)
 		goto fail;
 
@@ -2213,7 +2212,7 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 
 	/* Updated for latest version of sljit */
 	status = sljit_emit_enter(compiler, 0, SLJIT_ARGS2(W, W, W), nscratches(hints),
-	    NSAVEDS, 0, 0, sizeof(struct bpfjit_stack));
+	    NSAVEDS, sizeof(struct bpfjit_stack));
 	if (status != SLJIT_SUCCESS)
 		goto fail;
 
@@ -2304,7 +2303,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 		goto fail;
 	}
 
-	rv = sljit_generate_code(compiler);
+	/* Updated for latest version of sljit */
+	rv = sljit_generate_code(compiler, 0, NULL);
 
 fail:
 	if (compiler != NULL)
