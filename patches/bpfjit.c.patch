@@ -1,5 +1,5 @@
 diff --git a/src/net/bpfjit.c b/src/net/bpfjit.c
-index a0c9820..17afa4e 100644
+index a0c9820..08cc032 100644
 --- a/src/net/bpfjit.c
 +++ b/src/net/bpfjit.c
 @@ -33,7 +33,8 @@
@@ -138,26 +138,28 @@ index a0c9820..17afa4e 100644
  				    BJ_XREG, 0,
  				    SLJIT_IMM, 0);
  				if (jump == NULL)
-@@ -2190,7 +2202,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
- 	if (!optimize(bc, insns, insn_dat, insn_count, &initmask, &hints))
- 		goto fail;
- 
--	compiler = sljit_create_compiler(NULL);
-+	/* Updated for latest version of sljit */
-+	compiler = sljit_create_compiler(NULL, NULL);
- 	if (compiler == NULL)
- 		goto fail;
- 
-@@ -2198,7 +2211,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
+@@ -2198,8 +2210,9 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
  	sljit_compiler_verbose(compiler, stderr);
  #endif
  
 -	status = sljit_emit_enter(compiler, 0, 2, nscratches(hints),
+-	    NSAVEDS, 0, 0, sizeof(struct bpfjit_stack));
 +	/* Updated for latest version of sljit */
 +	status = sljit_emit_enter(compiler, 0, SLJIT_ARGS2(W, W, W), nscratches(hints),
- 	    NSAVEDS, 0, 0, sizeof(struct bpfjit_stack));
++	    NSAVEDS, sizeof(struct bpfjit_stack));
  	if (status != SLJIT_SUCCESS)
  		goto fail;
+ 
+@@ -2290,7 +2303,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
+ 		goto fail;
+ 	}
+ 
+-	rv = sljit_generate_code(compiler);
++	/* Updated for latest version of sljit */
++	rv = sljit_generate_code(compiler, 0, NULL);
+ 
+ fail:
+ 	if (compiler != NULL)
 @@ -2305,6 +2319,6 @@ fail:
  void
  bpfjit_free_code(bpfjit_func_t code)
