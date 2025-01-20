@@ -4,8 +4,8 @@ on: [push, pull_request]
 
 env:
   # Use a sljit version that is known to compile with bpjit-netbsd.
-  # This commit is from: Tue Sep 12 21:29:11 2023 -0700
-  USE_SLJIT_COMMIT: 3dcdb25754363db2cd34dbd1cd9a6a6b880cadae
+  # This commit is from: Fri Jan 17 11:39:36 2025 +0100
+  USE_SLJIT_COMMIT: 85782cfb77ae4f52e06975655aa4d37b08511ba0
 
 jobs:
   build:
