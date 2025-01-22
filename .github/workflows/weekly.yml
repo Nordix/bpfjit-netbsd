@@ -1,0 +1,39 @@
+name: Weekly
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 9 * * 1' # Mon 09.00 UTC
+
+jobs:
+  build:
+    name: Build using latest sljit
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Prepare
+      run: |
+        sudo apt install libpcap-dev
+    - name: Download, build and install latest sljit
+      run: |
+        mkdir -p $RUNNER_TEMP/install
+        DESTDIR=$RUNNER_TEMP/install make install-sljit
+    - name: Generate makefiles
+      run: |
+        mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo -DCMAKE_PREFIX_PATH=$RUNNER_TEMP/install ..
+    - name: Build and install bpfjit
+      working-directory: build
+      run: |
+        VERBOSE=1 make
+        DESTDIR=$RUNNER_TEMP/install make install
+    - name: Build and run tests via CMake
+      working-directory: build
+      run: |
+        make bpfjit-test && ./bpfjit-test
+        make bpfjit-test-with-pcap && ./bpfjit-test-with-pcap
+    - name: Build and run tests via Makefile
+      run: |
+        PREFIX=$RUNNER_TEMP/install/usr/local make test
+        PREFIX=$RUNNER_TEMP/install/usr/local make test-with-pcap
