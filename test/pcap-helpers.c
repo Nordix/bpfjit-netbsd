@@ -23,9 +23,11 @@ struct bpf_program* pcap_filter_compile(const char* filter, size_t snaplen) {
     struct bpf_program *program = malloc(sizeof(struct bpf_program));
     assert(program);
 
-    int ret = pcap_compile_nopcap(snaplen, linktype, program,
-                                  filter, optimize, mask);
+    pcap_t *p = pcap_open_dead(linktype, snaplen);
+    assert(p);
+    int ret = pcap_compile(p, program, filter, optimize, mask);
     assert(ret >= 0);
+    pcap_close(p);
 
     return program;
 }
