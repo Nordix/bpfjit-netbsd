@@ -36,50 +36,41 @@ jobs:
       run: sudo apt install ${{ matrix.compiler }} libpcap-dev
 
     - name: Setup CMake
-      uses: jwlawson/actions-setup-cmake@v1
+      uses: jwlawson/actions-setup-cmake@v2
       with:
         cmake-version: ${{ matrix.cmake-version }}
 
-    - uses: actions/checkout@v3
-
-    - name: Create install folder
-      run: cmake -E make_directory $RUNNER_TEMP/install
+    - uses: actions/checkout@v4
 
     - name: Download, build and install dependency sljit
       run: |
+        mkdir -p $RUNNER_TEMP/install
         DESTDIR=$RUNNER_TEMP/install \
         USE_SLJIT_COMMIT=${{ env.USE_SLJIT_COMMIT }} \
         make install-sljit
 
-    - name: Create build folder
-      run: cmake -E make_directory build
-
     - name: Generate makefiles
-      shell: bash
       env:
         CC: ${{ matrix.compiler }}
-      working-directory: build
-      run: cmake -DCMAKE_BUILD_TYPE=$BUILD_TYPE -DCMAKE_PREFIX_PATH=$RUNNER_TEMP/install ..
+      run: |
+        mkdir build && cd build
+        cmake -DCMAKE_BUILD_TYPE=${{ matrix.cmake-build-type }} -DCMAKE_PREFIX_PATH=$RUNNER_TEMP/install ..
 
     - name: Build bpfjit
-      shell: bash
       working-directory: build
       run: VERBOSE=1 make
 
     - name: Install bpfjit
-      shell: bash
       working-directory: build
       run: DESTDIR=$RUNNER_TEMP/install make install
 
     - name: Build and run tests via CMake
-      shell: bash
       working-directory: build
       run: |
         make bpfjit-test && ./bpfjit-test
         make bpfjit-test-with-pcap && ./bpfjit-test-with-pcap
 
     - name: Build and run tests via Makefile
-      shell: bash
       env:
         CC: ${{ matrix.compiler }}
       run: |
