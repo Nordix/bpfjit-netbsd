@@ -15,6 +15,9 @@ jobs:
     - name: Prepare
       run: |
         sudo apt install libpcap-dev
+    - name: Get sljit commit ID
+      run: |
+        curl -s -H "Accept: application/vnd.github.VERSION.sha" https://api.github.com/repos/zherczeg/sljit/commits/master
     - name: Download, build and install latest sljit
       run: |
         mkdir -p $RUNNER_TEMP/install
@@ -37,3 +40,15 @@ jobs:
       run: |
         PREFIX=$RUNNER_TEMP/install/usr/local make test
         PREFIX=$RUNNER_TEMP/install/usr/local make test-with-pcap
+
+  netbsd:
+    name: Verify patch files on NetBSD trunk
+    runs-on: ubuntu-24.04
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Download required NetBSD files and apply patch files
+      run: |
+        mkdir tmp && cd tmp
+        curl -s -O https://raw.githubusercontent.com/NetBSD/src/trunk/sys/net/\{bpf.h,bpfjit.c,bpfjit.h\}
+        for file in ../patches/*; do patch -p3 < $file; done
