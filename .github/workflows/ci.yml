@@ -40,7 +40,7 @@ jobs:
       with:
         cmake-version: ${{ matrix.cmake-version }}
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download, build and install dependency sljit
       run: |
