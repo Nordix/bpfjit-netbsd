@@ -76,25 +76,129 @@ void tc_bpfjit_ret_k() {
     assert(exec_prog(insns, insn_count, pkt, 1) == 17);
 }
 
-/* Test JIT compilation of a program with bad BPF_RET fails */
+/* Test that JIT compilation of a program ending with a bad BPF_RET+A fails */
+void tc_bpfjit_bad_ret_a() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LD+BPF_IMM, 13),
+        BPF_STMT(BPF_RET+BPF_A+0x8000, 0) /* bad ret */
+    };
+
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    bpfjit_func_t code;
+
+    const uint16_t rcode = insns[1].code;
+    assert(BPF_CLASS(rcode) == BPF_RET && BPF_RVAL(rcode) == BPF_A &&
+           rcode != BPF_RET+BPF_A);
+
+    code = bpfjit_generate_code(NULL, insns, insn_count);
+    assert(code == NULL);
+}
+
+/* Test that JIT compilation of a program ending with a bad BPF_RET fails */
 void tc_bpfjit_bad_ret_k() {
     static struct bpf_insn insns[] = {
-        BPF_STMT(BPF_RET+BPF_K+0x8000, 13)
+        BPF_STMT(BPF_RET+BPF_K+0x8000, 13) /* bad ret */
+    };
+
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    bpfjit_func_t code;
+
+    const uint16_t rcode = insns[0].code;
+    assert(BPF_CLASS(rcode) == BPF_RET && BPF_RVAL(rcode) == BPF_K &&
+           rcode != BPF_RET+BPF_K);
+
+    code = bpfjit_generate_code(NULL, insns, insn_count);
+    assert(code == NULL);
+}
+
+/* Test that JIT compilation of a program ending with a bad BPF_RET+X fails */
+void tc_bpfjit_bad_ret_x() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 13),
+        BPF_STMT(BPF_RET+BPF_X, 0) /* bad ret */
+    };
+
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    bpfjit_func_t code;
+
+    code = bpfjit_generate_code(NULL, insns, insn_count);
+    assert(code == NULL);
+}
+
+/* Test that JIT compiles a program with a bad BPF_RET+A in the middle */
+void tc_bpfjit_bad_middle_ret_a() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LD+BPF_IMM, 13),
+        BPF_STMT(BPF_RET+BPF_A+0x8000, 0), /* bad ret */
+        BPF_STMT(BPF_RET+BPF_K, 31) /* unreachable */
     };
 
     size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
     uint8_t pkt[1]; /* the program doesn't read any data */
 
-    /*
-     * The point of this test is checking a bad instruction of
-     * a valid class and with a valid BPF_RVAL data.
-     */
-    const uint16_t rcode = insns[0].code;
-    assert(BPF_CLASS(rcode) == BPF_RET &&
-           (BPF_RVAL(rcode) == BPF_K || BPF_RVAL(rcode) == BPF_A));
+    const uint16_t rcode = insns[1].code;
+    assert(BPF_CLASS(rcode) == BPF_RET && BPF_RVAL(rcode) == BPF_A &&
+           rcode != BPF_RET+BPF_A);
 
-    /* Current implementation generates code. */
+    /* bpf_validate() rejects a bad RET only if it's the last instruction */
+    assert(exec_prog(insns, insn_count, pkt, 1) == 0);
+}
+
+/* Test that JIT compiles a program with a bad BPF_RET+K in the middle */
+void tc_bpfjit_bad_middle_ret_k() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LD+BPF_IMM, 13),
+        BPF_STMT(BPF_RET+BPF_K+0x8000, 31), /* bad ret */
+        BPF_STMT(BPF_RET+BPF_A, 0) /* unreachable */
+    };
+
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    uint8_t pkt[1]; /* the program doesn't read any data */
+
+    const uint16_t rcode = insns[1].code;
+    assert(BPF_CLASS(rcode) == BPF_RET && BPF_RVAL(rcode) == BPF_K &&
+           rcode != BPF_RET+BPF_K);
+
+    /* bpf_validate() rejects a bad RET only if it's the last instruction */
+    assert(exec_prog(insns, insn_count, pkt, 1) == 0);
+}
+
+/* Test that JIT compiles a program with a bad BPF_RET+X in the middle */
+void tc_bpfjit_bad_middle_ret_x() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 13),
+        BPF_STMT(BPF_RET+BPF_X, 0), /* bad ret */
+        BPF_STMT(BPF_RET+BPF_K, 31) /* unreachable */
+    };
+
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    uint8_t pkt[1]; /* the program doesn't read any data */
+
+    /* bpf_validate() rejects a bad RET only if it's the last instruction */
+    assert(exec_prog(insns, insn_count, pkt, 1) == 0);
+}
+
+/* Test that JIT compiles a program with unreachable bad BPF_RET+X */
+void tc_bpfjit_bad_unreachable_ret_x() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LD+BPF_IMM, 13),
+        BPF_JUMP(BPF_JMP+BPF_JEQ+BPF_K, 13, 2, 0),
+        BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 31),
+        BPF_STMT(BPF_RET+BPF_X, 0), /* unreachable bad ret */
+        BPF_STMT(BPF_RET+BPF_A, 0)
+    };
+
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    uint8_t pkt[1]; /* the program doesn't read any data */
+
+    /* bpf_validate() rejects a bad RET only if it's the last instruction */
     assert(exec_prog(insns, insn_count, pkt, 1) == 13);
 }
 
@@ -147,10 +251,11 @@ void tc_bpfjit_alu_div0_k() {
         BPF_STMT(BPF_RET+BPF_A, 0)
     };
 
-    uint8_t pkt[1]; /* the program doesn't read any data */
+    bpfjit_func_t code;
     size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
-    assert(exec_prog(insns, insn_count, pkt, 1) == 0);
+    code = bpfjit_generate_code(NULL, insns, insn_count);
+    assert(code == NULL);
 }
 
 /* Test JIT compilation of BPF_ALU+BPF_DIV+BPF_K with k=1 */
@@ -258,10 +363,11 @@ void tc_bpfjit_alu_mod0_k() {
         BPF_STMT(BPF_RET+BPF_A, 0)
     };
 
-    uint8_t pkt[1]; /* the program doesn't read any data */
+    bpfjit_func_t code;
     size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
-    assert(exec_prog(insns, insn_count, pkt, 1) == 0);
+    code = bpfjit_generate_code(NULL, insns, insn_count);
+    assert(code == NULL);
 }
 
 /* Test JIT compilation of BPF_ALU+BPF_MOD+BPF_K with k=1 */
@@ -3140,7 +3246,13 @@ int main(int argc, char *argv[]) {
      */
     tc_bpfjit_empty();
     tc_bpfjit_ret_k();
+    tc_bpfjit_bad_ret_a();
     tc_bpfjit_bad_ret_k();
+    tc_bpfjit_bad_ret_x();
+    tc_bpfjit_bad_middle_ret_a();
+    tc_bpfjit_bad_middle_ret_k();
+    tc_bpfjit_bad_middle_ret_x();
+    tc_bpfjit_bad_unreachable_ret_x();
     tc_bpfjit_alu_add_k();
     tc_bpfjit_alu_sub_k();
     tc_bpfjit_alu_mul_k();
