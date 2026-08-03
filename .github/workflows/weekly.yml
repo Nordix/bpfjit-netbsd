@@ -8,10 +8,10 @@ on:
 jobs:
   build:
     name: Build using latest sljit
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: Prepare
       run: |
         sudo apt install libpcap-dev
@@ -43,12 +43,26 @@ jobs:
 
   netbsd:
     name: Verify patch files on NetBSD trunk
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Download required NetBSD files and apply patch files
       run: |
         mkdir tmp && cd tmp
         curl -s -O https://raw.githubusercontent.com/NetBSD/src/trunk/sys/net/\{bpf.h,bpfjit.c,bpfjit.h\}
-        for file in ../patches/*; do patch -p3 < $file; done
+        failed=0
+        for file in ../patches/*; do
+          echo "=== Applying: $file ==="
+          if ! patch -p3 < "$file"; then
+            echo "=== FAILED: $file ==="
+            failed=1
+          fi
+        done
+        echo ""
+        if [ $failed -ne 0 ]; then
+          echo "=== Reject files ==="
+          cat *.rej 2>/dev/null || echo "No .rej files"
+          exit 1
+        fi
+        echo "=== All patches applied successfully ==="
