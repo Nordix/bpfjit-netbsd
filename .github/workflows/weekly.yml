@@ -51,4 +51,18 @@ jobs:
       run: |
         mkdir tmp && cd tmp
         curl -s -O https://raw.githubusercontent.com/NetBSD/src/trunk/sys/net/\{bpf.h,bpfjit.c,bpfjit.h\}
-        for file in ../patches/*; do patch -p3 < $file; done
+        failed=0
+        for file in ../patches/*; do
+          echo "=== Applying: $file ==="
+          if ! patch -p3 < "$file"; then
+            echo "=== FAILED: $file ==="
+            failed=1
+          fi
+        done
+        echo ""
+        if [ $failed -ne 0 ]; then
+          echo "=== Reject files ==="
+          cat *.rej 2>/dev/null || echo "No .rej files"
+          exit 1
+        fi
+        echo "=== All patches applied successfully ==="
