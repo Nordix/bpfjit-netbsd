@@ -4,31 +4,25 @@ on: [push, pull_request]
 
 env:
   # Use a sljit version that is known to compile with bpjit-netbsd.
-  # This commit is from: Fri Jan 17 11:39:36 2025 +0100
-  USE_SLJIT_COMMIT: 85782cfb77ae4f52e06975655aa4d37b08511ba0
+  # This commit is from: Sat Aug 1 02:01:34 2026 -0400
+  USE_SLJIT_COMMIT: 67893de6cf6fb03fc2cb8ce9bf521a083c750e98
 
 jobs:
   build:
     name: ${{ matrix.cmake-build-type }}-build [${{ matrix.compiler }}, cmake-${{ matrix.cmake-version }}]
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-26.04
     strategy:
       fail-fast: false
       matrix:
-        compiler: [gcc-12, clang-14]
-        cmake-version: ['3.27']
+        compiler: [gcc-15, clang-22]
+        cmake-version: ['4.4.2']
         cmake-build-type: [Release, RelWithDebInfo]
         include:
-          - compiler: gcc-9
-            cmake-version: '3.12'
-            cmake-build-type: Release
           - compiler: gcc-11
             cmake-version: '3.18'
             cmake-build-type: Release
-          - compiler: clang-12
+          - compiler: clang-17
             cmake-version: '3.15'
-            cmake-build-type: Release
-          - compiler: clang-13
-            cmake-version: '3.20'
             cmake-build-type: Release
 
     steps:
@@ -40,7 +34,7 @@ jobs:
       with:
         cmake-version: ${{ matrix.cmake-version }}
 
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
 
     - name: Download, build and install dependency sljit
       run: |
