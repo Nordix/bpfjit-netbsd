@@ -1,14 +1,14 @@
 diff --git a/src/net/bpfjit.c b/src/net/bpfjit.c
-index a0c9820..08cc032 100644
+index ece3fa2..553d6a3 100644
 --- a/src/net/bpfjit.c
 +++ b/src/net/bpfjit.c
 @@ -33,7 +33,8 @@
  #ifdef _KERNEL
- __KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.49 2026/07/05 17:29:13 alnsn Exp $");
+ __KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.50 2026/10/30 21:23:29 alnsn Exp $");
  #else
--__RCSID("$NetBSD: bpfjit.c,v 1.49 2026/07/05 17:29:13 alnsn Exp $");
+-__RCSID("$NetBSD: bpfjit.c,v 1.50 2026/10/30 21:23:29 alnsn Exp $");
 +/* Remove use of undefined macro */
-+/*__RCSID("$NetBSD: bpfjit.c,v 1.49 2026/07/05 17:29:13 alnsn Exp $");*/
++/*__RCSID("$NetBSD: bpfjit.c,v 1.50 2026/10/30 21:23:29 alnsn Exp $");*/
  #endif
  
  #include <sys/types.h>
@@ -71,7 +71,7 @@ index a0c9820..08cc032 100644
  
  #if BJ_AREG != SLJIT_RETURN_REG
  	status = sljit_emit_op1(compiler,
-@@ -1601,7 +1607,7 @@ alu_to_op(const struct bpf_insn *pc, int *res)
+@@ -1613,7 +1619,7 @@ alu_to_op(const struct bpf_insn *pc, int *res)
  
  	/*
  	 * Note: all supported 64bit arches have 32bit multiply
@@ -80,7 +80,7 @@ index a0c9820..08cc032 100644
  	 */
  	switch (BPF_OP(pc->code)) {
  	case BPF_ADD:
-@@ -1611,7 +1617,8 @@ alu_to_op(const struct bpf_insn *pc, int *res)
+@@ -1623,7 +1629,8 @@ alu_to_op(const struct bpf_insn *pc, int *res)
  		*res = SLJIT_SUB;
  		return true;
  	case BPF_MUL:
@@ -90,17 +90,22 @@ index a0c9820..08cc032 100644
  		return true;
  	case BPF_OR:
  		*res = SLJIT_OR;
-@@ -1626,7 +1633,8 @@ alu_to_op(const struct bpf_insn *pc, int *res)
- 		*res = SLJIT_SHL;
- 		return k < 32;
+@@ -1635,10 +1642,12 @@ alu_to_op(const struct bpf_insn *pc, int *res)
+ 		*res = SLJIT_AND;
+ 		return true;
+ 	case BPF_LSH:
+-		*res = SLJIT_SHL|SLJIT_I32_OP;
++		/* Updated for latest version of sljit */
++		*res = SLJIT_SHL|SLJIT_32;
+ 		return valid_shift;
  	case BPF_RSH:
 -		*res = SLJIT_LSHR|SLJIT_I32_OP;
 +		/* Updated for latest version of sljit */
 +		*res = SLJIT_LSHR|SLJIT_32;
- 		return k < 32;
+ 		return valid_shift;
  	default:
  		return false;
-@@ -1642,9 +1650,10 @@ jmp_to_cond(const struct bpf_insn *pc, bool negate, int *res)
+@@ -1654,9 +1663,10 @@ jmp_to_cond(const struct bpf_insn *pc, bool negate, int *res)
  
  	/*
  	 * Note: all supported 64bit arches have 32bit comparison
@@ -113,7 +118,7 @@ index a0c9820..08cc032 100644
  
  	switch (BPF_OP(pc->code)) {
  	case BPF_JGT:
-@@ -1937,9 +1946,11 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
+@@ -1949,9 +1959,11 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
  
  		case BPF_ALU:
  			if (pc->code == (BPF_ALU|BPF_NEG)) {
@@ -127,7 +132,7 @@ index a0c9820..08cc032 100644
  				    BJ_AREG, 0);
  				if (status != SLJIT_SUCCESS)
  					goto fail;
-@@ -1969,8 +1980,9 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
+@@ -1981,8 +1993,9 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
  
  			/* division by zero? */
  			if (src == BPF_X) {
@@ -138,7 +143,7 @@ index a0c9820..08cc032 100644
  				    BJ_XREG, 0,
  				    SLJIT_IMM, 0);
  				if (jump == NULL)
-@@ -2198,8 +2210,9 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
+@@ -2220,8 +2233,9 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
  	sljit_compiler_verbose(compiler, stderr);
  #endif
  
@@ -150,7 +155,7 @@ index a0c9820..08cc032 100644
  	if (status != SLJIT_SUCCESS)
  		goto fail;
  
-@@ -2290,7 +2303,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
+@@ -2312,7 +2326,8 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
  		goto fail;
  	}
  
@@ -160,7 +165,7 @@ index a0c9820..08cc032 100644
  
  fail:
  	if (compiler != NULL)
-@@ -2305,6 +2319,6 @@ fail:
+@@ -2327,6 +2342,6 @@ fail:
  void
  bpfjit_free_code(bpfjit_func_t code)
  {
