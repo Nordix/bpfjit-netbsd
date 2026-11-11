@@ -27,6 +27,11 @@ which python3 > /dev/null || die "python3 not found in path"
 
 cd $(dirname $0)
 reporoot=$(pwd)
+
+# The history of the current branch is rewritten, so run on a separate branch.
+branch=$(git rev-parse --abbrev-ref HEAD) || die "Can't determine current git branch"
+[ "$branch" != "main" ] || die "Refusing to run on branch 'main'."
+
 mkdir -p _update
 cd _update || die "Can't cd to _update directory"
 
@@ -44,7 +49,7 @@ fi
 
 # Clone NetBSD. Update using git pull if clone already exists.
 if [ -d netbsd-src ] ; then
-    die "Directory netbsd-src already existing. Aborting."
+    die "Directory _update/netbsd-src already existing. Aborting."
 elif [ -e netbsd-src.tar.bz2 ] ; then
     echo "Restoring compressed copy of netbsd-src repo."
     # Found compressed copy of NetBSD repo from previous run of this script.
