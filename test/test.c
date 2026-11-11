@@ -962,7 +962,22 @@ void tc_bpfjit_alu_lsh_x() {
     assert(exec_prog(insns, insn_count, pkt, 1) == 0xbeef0000);
 }
 
-/* Test JIT compilation of BPF_ALU+BPF_LSH+BPF_X with k=0 */
+/* Test JIT compilation of BPF_ALU+BPF_LSH+BPF_X and k=1032 */
+void tc_bpfjit_alu_lsh_x_junk_k() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
+        BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 16),
+        BPF_STMT(BPF_ALU+BPF_LSH+BPF_X, 1032),
+        BPF_STMT(BPF_RET+BPF_A, 0)
+    };
+
+    uint8_t pkt[1]; /* the program doesn't read any data */
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    assert(exec_prog(insns, insn_count, pkt, 1) == 0xbeef0000);
+}
+
+/* Test JIT compilation of BPF_ALU+BPF_LSH+BPF_X with X=0 */
 void tc_bpfjit_alu_lsh0_x() {
     static struct bpf_insn insns[] = {
         BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
@@ -975,6 +990,26 @@ void tc_bpfjit_alu_lsh0_x() {
     size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
     assert(exec_prog(insns, insn_count, pkt, 1) == 0xdeadbeef);
+}
+
+/* Test JIT compilation of BPF_ALU+BPF_LSH+BPF_X with X=32 */
+void tc_bpfjit_alu_lsh32_x() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
+        BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 32),
+        BPF_STMT(BPF_ALU+BPF_LSH+BPF_X, 0),
+        BPF_STMT(BPF_RET+BPF_A, 0)
+    };
+
+    uint8_t pkt[1]; /* the program doesn't read any data */
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    /*
+     * A << X with X > 31 is undefined in C and in sljit. NetBSD compares
+     * the result with bpf_filter(), which is not available here, so only
+     * check that the program compiles and runs.
+     */
+    (void)exec_prog(insns, insn_count, pkt, 1);
 }
 
 /* Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X */
@@ -992,7 +1027,22 @@ void tc_bpfjit_alu_rsh_x() {
     assert(exec_prog(insns, insn_count, pkt, 1) == 0x0000dead);
 }
 
-/* Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X with k=0 */
+/* Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X with k=1032 */
+void tc_bpfjit_alu_rsh_x_junk_k() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
+        BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 16),
+        BPF_STMT(BPF_ALU+BPF_RSH+BPF_X, 1032),
+        BPF_STMT(BPF_RET+BPF_A, 0)
+    };
+
+    uint8_t pkt[1]; /* the program doesn't read any data */
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    assert(exec_prog(insns, insn_count, pkt, 1) == 0x0000dead);
+}
+
+/* Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X with X=0 */
 void tc_bpfjit_alu_rsh0_x() {
     static struct bpf_insn insns[] = {
         BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
@@ -1005,6 +1055,26 @@ void tc_bpfjit_alu_rsh0_x() {
     size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
     assert(exec_prog(insns, insn_count, pkt, 1) == 0xdeadbeef);
+}
+
+/* Test JIT compilation of BPF_ALU+BPF_RSH+BPF_X with X=32 */
+void tc_bpfjit_alu_rsh32_x() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LD+BPF_IMM, 0xdeadbeef),
+        BPF_STMT(BPF_LDX+BPF_W+BPF_IMM, 32),
+        BPF_STMT(BPF_ALU+BPF_RSH+BPF_X, 0),
+        BPF_STMT(BPF_RET+BPF_A, 0)
+    };
+
+    uint8_t pkt[1]; /* the program doesn't read any data */
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    /*
+     * A >> X with X > 31 is undefined in C and in sljit. NetBSD compares
+     * the result with bpf_filter(), which is not available here, so only
+     * check that the program compiles and runs.
+     */
+    (void)exec_prog(insns, insn_count, pkt, 1);
 }
 
 /* Test JIT compilation of modulo logic of BPF_ALU+BPF_X operations */
@@ -1647,6 +1717,34 @@ void tc_bpfjit_jmp_modulo_x() {
     size_t insn_count = sizeof(insns) / sizeof(insns[0]);
 
     assert(exec_prog(insns, insn_count, pkt, 1) == UINT32_MAX);
+}
+
+/* Test JIT compilation of BPF_JMP with invalid opcode and different targets */
+void tc_bpfjit_jmp_invalid_opcode_jt_ne_jf() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LD+BPF_LEN, 0), /* A > 0 */
+        BPF_JUMP(BPF_JMP+0xf0+BPF_K, 7, 0, 1), /* 0xf0 is invalid jump opcode */
+        BPF_STMT(BPF_RET+BPF_K, 10),
+        BPF_STMT(BPF_RET+BPF_K, 11)
+    };
+
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    assert(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
+}
+
+/* Test JIT compilation of BPF_JMP with invalid opcode and same targets */
+void tc_bpfjit_jmp_invalid_opcode_jt_eq_jf() {
+    static struct bpf_insn insns[] = {
+        BPF_STMT(BPF_LD+BPF_LEN, 0), /* A > 0 */
+        BPF_JUMP(BPF_JMP+0xf0+BPF_K, 7, 1, 1), /* 0xf0 is invalid jump opcode */
+        BPF_STMT(BPF_RET+BPF_K, 10),
+        BPF_STMT(BPF_RET+BPF_K, 11)
+    };
+
+    size_t insn_count = sizeof(insns) / sizeof(insns[0]);
+
+    assert(bpfjit_generate_code(NULL, insns, insn_count) == NULL);
 }
 
 /* Test JIT compilation of BPF_LD+BPF_ABS */
@@ -3303,9 +3401,13 @@ int main(int argc, char *argv[]) {
     tc_bpfjit_alu_or_x();
     tc_bpfjit_alu_xor_x();
     tc_bpfjit_alu_lsh_x();
+    tc_bpfjit_alu_lsh_x_junk_k();
     tc_bpfjit_alu_lsh0_x();
+    tc_bpfjit_alu_lsh32_x();
     tc_bpfjit_alu_rsh_x();
+    tc_bpfjit_alu_rsh_x_junk_k();
     tc_bpfjit_alu_rsh0_x();
+    tc_bpfjit_alu_rsh32_x();
     tc_bpfjit_alu_modulo_x();
     tc_bpfjit_alu_neg();
     tc_bpfjit_jmp_ja();
@@ -3324,6 +3426,8 @@ int main(int argc, char *argv[]) {
     tc_bpfjit_jmp_jeq_x_noinit_a();
     tc_bpfjit_jmp_jeq_x_noinit_x();
     tc_bpfjit_jmp_modulo_x();
+    tc_bpfjit_jmp_invalid_opcode_jt_eq_jf();
+    tc_bpfjit_jmp_invalid_opcode_jt_ne_jf();
     tc_bpfjit_ld_abs();
     tc_bpfjit_ld_abs_k_overflow();
     tc_bpfjit_ld_ind();
